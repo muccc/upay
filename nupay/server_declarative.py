@@ -90,6 +90,7 @@ class User(Base):
     name = Column(String, unique = True)
     max_transfer_amount = Column(Integer)
     rate_limit_in_s = Column(Integer)
+    password = Column(String)
 
 class LogEntry(Base):
     __tablename__ = 'logs'

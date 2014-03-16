@@ -14,6 +14,7 @@ def db_config():
     config.add_section("Database")
     config.set("Database", "url", "sqlite:///:memory:")
     config.set("Database", "echo", "True")
+    config.set("Database", "echo", "False")
     #config.set("Database", "url", "postgresql://testuser:fnord23@localhost:5432/testtokendb")
     config.set("Database", "allow_bootstrap", "True")
     return config
@@ -154,8 +155,8 @@ class SessionTest(unittest.TestCase):
     
     def test_create_user(self):
         session = self.session_manager.create_session()
-        session.create_user('foo')
-        self.assertRaises(sqlalchemy.exc.IntegrityError, session.create_user, 'foo')
+        session.create_user('foo', 'password', use_bcrypt = False)
+        self.assertRaises(sqlalchemy.exc.IntegrityError, session.create_user, 'foo', 'password', use_bcrypt = False)
  
     def test_create_account(self):
         session = self.session_manager.create_session()
@@ -164,19 +165,19 @@ class SessionTest(unittest.TestCase):
     
     def test_grant_right(self):
         session = self.session_manager.create_session()
-        user = session.create_user('user1')
+        user = session.create_user('user1', 'password', use_bcrypt = False)
         account = session.create_account('account1')
         session.grant_right(user, account, 'foo right')
     
     def test_check_right(self):
         session = self.session_manager.create_session()
-        user = session.create_user('user1')
+        user = session.create_user('user1', 'password', use_bcrypt = False)
         account = session.create_account('account1')
         session.grant_right(user, account, 'foo right')
         session.close()
 
         session = self.session_manager.create_session()
-        user = session.get_user('user1')
+        user = session.get_user('user1', 'password', use_bcrypt = False)
         account = session.get_account('account1')
         session.check_right(user, account, 'foo right')
         
@@ -184,29 +185,32 @@ class SessionTest(unittest.TestCase):
     
     def test_get_user(self):
         session = self.session_manager.create_session()
-        user1 = session.create_user('user1')
-        user2 = session.create_user('user2')
+        user1 = session.create_user('user1', 'password', use_bcrypt = False)
+        user2 = session.create_user('user2', 'password')
         session.close()
 
         session = self.session_manager.create_session()
-        self.assertEquals('user1', session.get_user('user1').name)
-        self.assertRaises(sqlalchemy.orm.exc.NoResultFound, session.get_user, 'foo user')
+        self.assertEquals('user1', session.get_user('user1', 'password', use_bcrypt = False).name)
+        self.assertEquals('user2', session.get_user('user2', 'password').name)
+        self.assertRaises(sqlalchemy.orm.exc.NoResultFound, session.get_user, 'foo user', 'password', use_bcrypt = False)
+        self.assertRaises(sqlalchemy.orm.exc.NoResultFound, session.get_user, 'foo user', 'password')
+        self.assertRaises(nupay.PermissionError, session.get_user, 'user2', 'password2')
 
     def test_get_account(self):
         session = self.session_manager.create_session()
-        account1 = session.create_user('account1')
-        account2 = session.create_user('account2')
+        account1 = session.create_user('account1', 'password', use_bcrypt = False)
+        account2 = session.create_user('account2', 'password', use_bcrypt = False)
         session.close()
 
         session = self.session_manager.create_session()
-        self.assertEquals('account1', session.get_user('account1').name)
-        self.assertRaises(sqlalchemy.orm.exc.NoResultFound, session.get_user, 'foo user')
+        self.assertEquals('account1', session.get_user('account1', 'password', use_bcrypt = False).name)
+        self.assertRaises(sqlalchemy.orm.exc.NoResultFound, session.get_user, 'foo user', 'password', use_bcrypt = False)
 
     def test_good_transfer(self):
         session = self.session_manager.create_session()
         origin = session.create_account('origin')
         destination = session.create_account('destination')
-        user = session.create_user('user')
+        user = session.create_user('user', 'password', use_bcrypt = False)
         session.grant_right(user, origin, 'draw')
         session.grant_right(user, destination, 'deposit')
         
@@ -216,7 +220,7 @@ class SessionTest(unittest.TestCase):
         session = self.session_manager.create_session()
         origin = session.create_account('origin')
         destination = session.create_account('destination')
-        user = session.create_user('user')
+        user = session.create_user('user', 'password', use_bcrypt = False)
         session.grant_right(user, origin, 'deposit')
         session.grant_right(user, destination, 'deposit')
         

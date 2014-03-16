@@ -10,6 +10,7 @@ from decimal import Decimal
 from token import Token
 import server_declarative
 from server_declarative import Token, User, Account, AccountACL, LogEntry
+import bcrypt
 
 class ServerSessionManager(object):
     def __init__(self, config):
@@ -145,15 +146,24 @@ class ServerSession(object):
         self._db_session.commit()
         return account
 
-    def create_user(self, name):
+    def create_user(self, name, password, use_bcrypt = True):
         # User names are unique, so this will throw an exception if the account already exists
-        user = User(name = name)
+        if use_bcrypt:
+            password = bcrypt.hashpw(password, bcrypt.gensalt())
+        user = User(name = name, password = password)
         self._db_session.add(user)
         self._db_session.commit()
         return user
     
-    def get_user(self, name):
-        return self._db_session.query(User).filter_by(name = name).one()
+    def get_user(self, name, password, use_bcrypt = True):
+        user = self._db_session.query(User).filter_by(name = name).one()
+        if password is not None:
+            if use_bcrypt:
+                if bcrypt.hashpw(password, str(user.password)) != str(user.password):
+                    raise PermissionError("Bad password")
+            elif user.password != password:
+                raise PermissionError("Bad password")
+        return user
 
     def get_account(self, name):
         return self._db_session.query(Account).filter_by(name = name).one()
