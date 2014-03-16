@@ -4,18 +4,20 @@ from sqlalchemy import orm
 from datetime import datetime
 
 from session import SessionConnectionError, NotEnoughCreditError, RollbackError
+from session import PermissionError, LogicError
 
 from decimal import Decimal
 from token import Token
 import server_declarative
-from server_declarative import Token
+from server_declarative import Token, User, Account, AccountACL, LogEntry
 
 class ServerSessionManager(object):
     def __init__(self, config):
         self._logger = logging.getLogger(__name__)
         self.config = config
         try:
-            self.engine = sqlalchemy.create_engine(config.get('Database', 'url'), echo = False)
+            echo = config.get('Database', 'echo') == 'True'
+            self.engine = sqlalchemy.create_engine(config.get('Database', 'url'), echo = echo)
             self.SessionMaker = orm.sessionmaker(bind=self.engine)
             self.SessionMaker()
             self.create_session().close()
@@ -122,4 +124,70 @@ class ServerSession(object):
         self._db_session.commit()
 
         return tokens
+    
+    def check_right(self, user, account, right):
+        try:
+            self._db_session.query(AccountACL).filter((AccountACL.user == user) & (AccountACL.account == account)).filter_by(right = right).one()
+        except orm.exc.NoResultFound:
+            raise PermissionError("User: '%s' does not have the right '%s' for account '%s'" % (user.name, right, account.name))
+
+    def create_account(self, name):
+        # Account names are unique, so this will throw an exception if the account already exists
+        account = Account(name = name, balance = 0, is_kickstart = False, kickstart_target = 0, is_active = True)
+        self._db_session.add(account)
+        self._db_session.commit()
+        return account
+
+    def create_kickstart_account(self, name, target):
+        # Account names are unique, so this will throw an exception if the account already exists
+        account = Account(name = name, balance = 0, is_kickstart = True, kickstart_target = target, is_active = True)
+        self._db_session.add(account)
+        self._db_session.commit()
+        return account
+
+    def create_user(self, name):
+        # User names are unique, so this will throw an exception if the account already exists
+        user = User(name = name)
+        self._db_session.add(user)
+        self._db_session.commit()
+        return user
+    
+    def get_user(self, name):
+        return self._db_session.query(User).filter_by(name = name).one()
+
+    def get_account(self, name):
+        return self._db_session.query(Account).filter_by(name = name).one()
+
+    def grant_right(self, user, account, right):
+        # An AccountACL must be uniqe over all fields
+        acl = AccountACL(user = user, account = account, right = right)
+        self._db_session.add(acl)
+        self._db_session.commit()
+        return acl
+    
+    def transfer(self, origin, destination, amount, user):
+        self.check_right(user, origin, 'draw')
+        self.check_right(user, destination, 'deposit')
+
+        if origin is destination:
+            raise LogicError("Origin and destination are the same account")
+
+        if origin.is_active == False:
+            raise LogicError("The origin '%s' of the transfer is not active")
+
+        if destination.is_active == False:
+            raise LogicError("The destination '%s' of the transfer is not active")
+
+        if origin.is_cash != destination.is_cash:
+            raise LogicError("The accounts of a transfer must both have the same type")
+
+        if origin.is_kickstart and destination.is_kickstart: 
+            raise LogicError("Both accounts are kickstart accounts")
+
+        if amount <=  0:
+            raise LogicError("The amount must be positive")
+
+        origin.balance -= amount
+        destination.balance += amount
+        self._db_session.commit()
 

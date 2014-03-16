@@ -26,6 +26,12 @@ class ConnectionError(Exception):
 class SessionError(Exception):
     pass
 
+class PermissionError(Exception):
+    pass
+
+class LogicError(Exception):
+    pass
+
 class SessionManager(object):
     def __init__(self, config_location = '/etc/upay'):
         self._logger = logging.getLogger(__name__)
