@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-import nupay
+import upay
 import ConfigParser
 import signal
 
@@ -11,12 +11,12 @@ def read_config(config_location):
 if __name__ == '__main__':
     config = read_config('/etc/upay/mqtt-git-forwarder.cfg')
 
-    git_collector = nupay.GITCollector(config.get('GIT', 'URL'))
+    git_collector = upay.GITCollector(config.get('GIT', 'URL'))
     collectors = [git_collector]
     mqtt_server = config.get('MQTT', 'server')
     mqtt_topic = config.get('MQTT', 'topic')
     mqtt_client_id = config.get('MQTT', 'client_id')
-    forwarder = nupay.MQTTTokenForwarder(mqtt_server, mqtt_topic, mqtt_client_id, collectors)
+    forwarder = upay.MQTTTokenForwarder(mqtt_server, mqtt_topic, mqtt_client_id, collectors)
     signal.signal(signal.SIGINT, lambda signal, frame: forwarder.stop())
     signal.pause()
     forwarder.join()

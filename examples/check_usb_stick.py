@@ -1,11 +1,11 @@
-import nupay
+import upay
 import time
 import logging
 
 logging.basicConfig(level=logging.DEBUG)
 
-token_reader = nupay.USBTokenReader()
-session_manager = nupay.SessionManager()
+token_reader = upay.USBTokenReader()
+session_manager = upay.SessionManager()
 
 while True:
     print("Waiting for purse")
@@ -14,7 +14,7 @@ while True:
         try:
             tokens = token_reader.read_tokens()
             break
-        except nupay.NoTokensAvailableError:
+        except upay.NoTokensAvailableError:
             time.sleep(1)
 
     print("Read %d tokens"%len(tokens))

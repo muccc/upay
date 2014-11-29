@@ -1,9 +1,9 @@
 import sys
-import nupay
+import upay
 
-tokens = nupay.read_tokens_from_file(sys.argv[1])
+tokens = upay.read_tokens_from_file(sys.argv[1])
 
-token_client = nupay.TokenClient()
+token_client = upay.TokenClient()
 
 tokens = token_client.validate_tokens(tokens)
 

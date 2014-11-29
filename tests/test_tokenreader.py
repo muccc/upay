@@ -6,7 +6,7 @@ import io
 import logging
 import shutil
 import hashlib
-import nupay
+import upay
 
 class USBTokenReaderTest(unittest.TestCase):
 
@@ -16,7 +16,7 @@ class USBTokenReaderTest(unittest.TestCase):
         unused, self.mounts_path = tempfile.mkstemp()
         self.tmpdir = tempfile.mkdtemp()
         self.write_no_device()
-        self.token_reader = nupay.USBTokenReader(mounts_path=self.mounts_path)
+        self.token_reader = upay.USBTokenReader(mounts_path=self.mounts_path)
 
     def tearDown(self):
         shutil.rmtree(self.tmpdir)
@@ -32,24 +32,24 @@ class USBTokenReaderTest(unittest.TestCase):
                 f.write("/dev/sda1 %s vfat rw,sync,nodev,noexec,noatime,nodiratime,fmask=0022,dmask=0022,codepage=cp437,iocharset=ascii,shortname=mixed,errors=remount-ro 0 0\n"%path)
 
     def test_no_device(self):
-        self.assertRaises(nupay.NoTokensAvailableError, self.token_reader.read_tokens)
+        self.assertRaises(upay.NoTokensAvailableError, self.token_reader.read_tokens)
 
     def test_new_device(self):
         self.write_paths(["/mnt/foobar"])
-        self.assertRaises(nupay.NoTokensAvailableError, self.token_reader.read_tokens)
+        self.assertRaises(upay.NoTokensAvailableError, self.token_reader.read_tokens)
 
     def test_new_device_with_bad_purse(self):
         self.write_paths([self.tmpdir])
         with io.open(self.tmpdir+'/purse', "wb") as purse:
             purse.write("123\n")
             purse.write("124\n")
-        self.assertRaises(nupay.NoTokensAvailableError, self.token_reader.read_tokens)
+        self.assertRaises(upay.NoTokensAvailableError, self.token_reader.read_tokens)
 
     def test_new_device_with_empty_purse(self):
         self.write_paths([self.tmpdir])
         with io.open(self.tmpdir+'/purse', "wb") as purse:
             pass
-        self.assertRaises(nupay.NoTokensAvailableError, self.token_reader.read_tokens)
+        self.assertRaises(upay.NoTokensAvailableError, self.token_reader.read_tokens)
 
     def test_new_device_with_purse_dup(self):
         self.write_paths([self.tmpdir])
@@ -108,7 +108,7 @@ class USBTokenReaderTest(unittest.TestCase):
         with io.open(self.tmpdir+'/purse', "wb") as purse:
             for i in range(30000):
                 purse.write("023.42%%23fff2f231992957ecf7180d3490ead21b5da8d489b71dd6e59b02a0f563e330%%%d\n"%(t+i))
-        self.assertRaises(nupay.NoTokensAvailableError, self.token_reader.read_tokens)
+        self.assertRaises(upay.NoTokensAvailableError, self.token_reader.read_tokens)
 
 
 
