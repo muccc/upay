@@ -5,7 +5,6 @@ import git
 import tempfile
 import os
 import datetime
-from decimal import Decimal
 from token import Token
 
 class Collector(object):

@@ -1,11 +1,5 @@
-import requests
-import sys
-import json
 import logging
-import ssl
 import time
-import ConfigParser
-from decimal import Decimal
 from collections import defaultdict
 
 from token import Token
