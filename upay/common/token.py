@@ -2,7 +2,6 @@
 import re
 import hashlib
 import time
-import os
 import logging
 from decimal import Decimal
 import datetime
