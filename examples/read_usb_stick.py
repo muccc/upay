@@ -1,9 +1,9 @@
-import upay
+import upay.common
 import time
 import logging
 
 logging.basicConfig(level=logging.DEBUG)
-token_reader = upay.USBTokenReader()
+token_reader = upay.common.USBTokenReader()
 
 
 while True:
@@ -13,7 +13,7 @@ while True:
         try:
             tokens = token_reader.read_tokens()
             break
-        except upay.NoTokensAvailableError:
+        except upay.common.NoTokensAvailableError:
             time.sleep(1)
 
     print("Read %d tokens"%len(tokens))

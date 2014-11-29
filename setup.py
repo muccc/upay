@@ -12,7 +12,8 @@ setup(
     author='Tobias Schneider',
     author_email='schneider@xtort.eu',
     url='https://github.com/muccc/upay',
-    packages=['upay'],
+    packages=['upay.client', 'upay.common'],
+    namespace_packages = ['upay'],
     scripts=['scripts/mqtt-git-forwarder', 'scripts/mqtt-mail-forwarder'],
     long_description=open('README.md').read(),
     classifiers=[

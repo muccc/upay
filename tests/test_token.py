@@ -6,7 +6,7 @@ import io
 import logging
 import shutil
 from decimal import Decimal
-import upay
+import upay.common
 from mock import patch
 import time
 import datetime
@@ -30,31 +30,31 @@ class TokenTest(unittest.TestCase):
         pass
 
     def test_encrypted(self):
-        token1 = upay.Token({'value': '000.20',
+        token1 = upay.common.Token({'value': '000.20',
                               'encrytped_token': 'jslkdjflkfj',
                               'hash': '00'*64,
                               'created': '2012-12-12 12:12:12'})
 
-        token2 = upay.Token('{"value": "002.00", "hash": "' + '00'*64 + '", "created": "2012-12-12 12:12:12"}')
-        token3 = upay.Token('{"value": "002.00", "token": "' + '00'*32 + '", "created": "2012-12-12 12:12:12"}')
+        token2 = upay.common.Token('{"value": "002.00", "hash": "' + '00'*64 + '", "created": "2012-12-12 12:12:12"}')
+        token3 = upay.common.Token('{"value": "002.00", "token": "' + '00'*32 + '", "created": "2012-12-12 12:12:12"}')
 
-        self.assertRaises(upay.BadTokenFormatError, upay.Token,{'value': '000.20',
+        self.assertRaises(upay.common.BadTokenFormatError, upay.common.Token,{'value': '000.20',
                               'encrytped_token': 'jslkdjflkfj',
                               'created': '2012-12-12 12:12:12'})
 
         encrypted = token3.encrypted(self._encrypt)
 
-        self.assertRaises(upay.BadTokenFormatError, token2.encrypted, self._encrypt)
+        self.assertRaises(upay.common.BadTokenFormatError, token2.encrypted, self._encrypt)
 
-        decrypted = upay.Token(dict(encrypted), self._decrypt)
-
-        self.assertEquals(token3, decrypted)
-
-        decrypted = upay.Token(str(encrypted), self._decrypt)
+        decrypted = upay.common.Token(dict(encrypted), self._decrypt)
 
         self.assertEquals(token3, decrypted)
 
-        encrypted2 = upay.Token(str(encrypted))
+        decrypted = upay.common.Token(str(encrypted), self._decrypt)
+
+        self.assertEquals(token3, decrypted)
+
+        encrypted2 = upay.common.Token(str(encrypted))
 
         self.assertEquals(encrypted, encrypted2)
 
@@ -64,20 +64,20 @@ class TokenTest(unittest.TestCase):
         self.assertTrue('\n' not in encrypted['encrypted_token'])
 
     def test_partial(self):
-        token1 = upay.Token({'value': '002.00', 'hash': '00'*64, 'created': '2012-12-12 12:12:12'})
-        token2 = upay.Token('{"value": "002.00", "hash": "' + '00'*64 + '", "created": "2012-12-12 12:12:12"}')
+        token1 = upay.common.Token({'value': '002.00', 'hash': '00'*64, 'created': '2012-12-12 12:12:12'})
+        token2 = upay.common.Token('{"value": "002.00", "hash": "' + '00'*64 + '", "created": "2012-12-12 12:12:12"}')
 
         self.assertEqual(token1, token2)
         self.assertEqual(token1['hash'], '00' * 64)
 
-        self.assertRaises(upay.BadTokenFormatError, upay.Token, {'value': '002.00',
+        self.assertRaises(upay.common.BadTokenFormatError, upay.common.Token, {'value': '002.00',
                               'token': '00'*32,
                               'hash': '00'*64,
                               'created': '2012-12-12 12:12:12'})
 
     def test_validation(self):
-        self.assertRaises(upay.BadTokenFormatError, upay.Token, "foobar")
-        token = upay.Token('{"value": "002.00", \
+        self.assertRaises(upay.common.BadTokenFormatError, upay.common.Token, "foobar")
+        token = upay.common.Token('{"value": "002.00", \
                             "token": "745bfde3fde06aa76be565c84a8402c94b42ddcbd86897077072910f2a3054cd", \
                             "created": "2014-12-12 12:12:12"}')
 
@@ -98,7 +98,7 @@ class TokenTest(unittest.TestCase):
         self.assertIn('token', keys)
         self.assertIn('value', keys)
 
-        token = upay.Token({"value": "002.00", \
+        token = upay.common.Token({"value": "002.00", \
                             "token": "745bfde3fde06aa76be565c84a8402c94b42ddcbd86897077072910f2a3054cd", \
                             "created": "2014-12-12 12:12:12"})
 
@@ -120,53 +120,53 @@ class TokenTest(unittest.TestCase):
         self.assertIn('value', keys)
 
 
-        self.assertRaises(upay.BadTokenFormatError, upay.Token,
+        self.assertRaises(upay.common.BadTokenFormatError, upay.common.Token,
                           '{"value": "002.00", \
                           "token": "745bfde3fde06aa76be565c84a8402c94b42ddcbd86897077072910f2a3054cd", \
                           "created": "2014-12-32 12:12:12"}')
 
-        self.assertRaises(upay.BadTokenFormatError, upay.Token,
+        self.assertRaises(upay.common.BadTokenFormatError, upay.common.Token,
                           '{"value": "002.00", \
                           "token": "745bfde3fde06aa76be565c84a8402c94b42ddcbd86897077072910f2a3054c", \
                           "created": "2014-12-12 12:12:12"}')
 
-        self.assertRaises(upay.BadTokenFormatError, upay.Token,
+        self.assertRaises(upay.common.BadTokenFormatError, upay.common.Token,
                           '{"value": "002.00", \
                           "token": "745bfde3fde06aa76be565c84a8402c94b42ddcbd86897077072910f2a3054caaaaaa", \
                           "created": "2014-12-12 12:12:12"}')
 
-        self.assertRaises(upay.BadTokenFormatError, upay.Token,
+        self.assertRaises(upay.common.BadTokenFormatError, upay.common.Token,
                           '{"value": "002.00", \
                           "token": "X45bfde3fde06aa76be565c84a8402c94b42ddcbd86897077072910f2a3054cd", \
                           "created": "2014-12-12 12:12:12"}')
 
-        self.assertRaises(upay.BadTokenFormatError, upay.Token,
+        self.assertRaises(upay.common.BadTokenFormatError, upay.common.Token,
                           '{"value": "02.00", \
                           "token": "X45bfde3fde06aa76be565c84a8402c94b42ddcbd86897077072910f2a3054cd", \
                           "created": "2014-12-12 12:12:12"}')
 
-        self.assertRaises(upay.BadTokenFormatError, upay.Token,
+        self.assertRaises(upay.common.BadTokenFormatError, upay.common.Token,
                           '{"value": "02.00", \
                           "token": "X45bfde3fde06aa76be565c84a8402c94b42ddcbd86897077072910f2a3054cd", \
                           "created": "2014-12-12 12:12:12"}')
 
-        self.assertRaises(upay.BadTokenFormatError, upay.Token,
+        self.assertRaises(upay.common.BadTokenFormatError, upay.common.Token,
                           '{"value": "02.00", \
                           "token": "X45bfde3fde06aa76be565c84a8402c94b42ddcbd86897077072910f2a3054cd", \
                           "created": "2014-12-12 12:12:12"')
 
-        self.assertRaises(upay.BadTokenFormatError, upay.Token,
+        self.assertRaises(upay.common.BadTokenFormatError, upay.common.Token,
                           '{"value": "02.00", \
                           "token": "X45bfde3fde06aa76be565c84a8402c94b42dd", \
                           "created": "2014-12-12 12:12:12"')
 
-        token = upay.Token('{"value": "002.00", \
+        token = upay.common.Token('{"value": "002.00", \
                             "token": "745bfde3fde06aa76be565c84a8402c94b42ddcbd86897077072910f2a3054cd", \
                             "created": "2014-12-12 12:12:12"}')
 
 
     def test_hash(self):
-        token = upay.Token('{"value": "002.00", \
+        token = upay.common.Token('{"value": "002.00", \
                             "token": "745bfde3fde06aa76be565c84a8402c94b42ddcbd86897077072910f2a3054cd", \
                             "created": "2014-12-12 12:12:12"}')
 
@@ -175,20 +175,20 @@ class TokenTest(unittest.TestCase):
         hash_string = sha512.hexdigest()
         self.assertEqual(token.hash_string, hash_string)
 
-        token = upay.Token(Decimal(20))
+        token = upay.common.Token(Decimal(20))
         self.assertNotEqual(token.hash_string, "b15772d0ed237646b769a568245bd7e791f549d38880f58b515be6d8e5eed73c6ff75c97744adc03def5c915f12d9374c28a33f8143a4a916db48149e0d72931")
 
     @patch('time.time')
     def test_create(self, time_mock):
         time_mock.return_value = self._t0
-        token1 = upay.Token(Decimal(20))
+        token1 = upay.common.Token(Decimal(20))
         token_string = str(token1)
         self.assertEquals(token1.created, datetime.datetime.utcfromtimestamp(self._t0))
 
-        token2 = upay.Token(token_string)
+        token2 = upay.common.Token(token_string)
         self.assertEqual(token2, token1)
 
-        token3 = upay.Token(Decimal(20))
+        token3 = upay.common.Token(Decimal(20))
 
         self.assertNotEqual(token3, token1)
 
