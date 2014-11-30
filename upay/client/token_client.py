@@ -6,7 +6,7 @@ import time
 import ConfigParser
 from decimal import Decimal
 
-from token import Token
+from upay.common.token import Token
 
 class ConnectionError(Exception):
     pass

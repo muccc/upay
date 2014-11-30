@@ -2,7 +2,7 @@ import logging
 import time
 from collections import defaultdict
 
-from token import Token
+from upay.common.token import Token
 from token_client import TokenClient
 
 class SessionConnectionError(Exception):
