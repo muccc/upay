@@ -23,7 +23,7 @@ setup(
         "Intended Audience :: Developers",
         "Topic :: Software Development :: Libraries :: Python Modules",
     ],
-    requires=["jsonschema", "requests", "iso8601", "pygit", "mosquitto"],
+    install_requires=["jsonschema", "requests", "iso8601", "pygit", "mosquitto"],
     keywords='upay',
     license='GPLv3+',
 )
